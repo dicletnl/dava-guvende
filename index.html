@@ -2,39 +2,110 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Dava Güvende</title>
+<title>Dava Güvende - Arşivli Sistem</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
 <style>
 body{font-family:Arial;padding:20px;background:#f4f6f9}
-.box{background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1)}
-button{padding:10px 15px;border:none;background:#0070f3;color:white;border-radius:5px}
+.box{background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1);margin-bottom:20px}
+button{padding:8px 12px;border:none;background:#0070f3;color:white;border-radius:5px;margin-top:5px}
 .warning{color:red;font-weight:bold}
 .safe{color:green;font-weight:bold}
 .info{color:#333;font-weight:bold}
+.suggest{color:orange;font-weight:bold}
+.fileItem{border-bottom:1px solid #ddd;padding:8px 0}
+.small{font-size:12px;color:gray}
 </style>
 </head>
 <body>
+
 <div class="box">
-<h2>📄 Dava Güvende - Akıllı Dava Analizi</h2>
-<input type="file" id="pdfFile" accept=".pdf"/>
-<br><br>
-<button onclick="analyze()">Analiz Et</button>
-<p id="result"></p>
+<h2>📂 Dosya Yükle</h2>
+<input type="file" id="fileInput" multiple>
+<br>
+<button onclick="saveFiles()">Kaydet</button>
+</div>
+
+<div class="box">
+<h2>📁 Arşiv</h2>
+<div id="fileList"></div>
+</div>
+
+<div class="box">
+<h2>🧠 Analiz Sonucu</h2>
+<div id="result"></div>
 </div>
 
 <script>
-async function analyze(){
-let file = document.getElementById("pdfFile").files[0];
-if(!file){
-document.getElementById("result").innerHTML="Lütfen PDF yükleyin.";
+
+function getFileType(file){
+if(file.type.includes("pdf")) return "PDF";
+if(file.type.includes("word") || file.name.endsWith(".doc") || file.name.endsWith(".docx")) return "Word";
+if(file.type.includes("image")) return "Görsel";
+if(file.type.includes("text")) return "Metin";
+return "Bilinmeyen";
+}
+
+function saveFiles(){
+let files = document.getElementById("fileInput").files;
+let stored = JSON.parse(localStorage.getItem("arsiv") || "[]");
+
+for(let file of files){
+let reader = new FileReader();
+reader.onload = function(e){
+stored.push({
+name: file.name,
+type: getFileType(file),
+data: e.target.result
+});
+localStorage.setItem("arsiv", JSON.stringify(stored));
+displayFiles();
+}
+reader.readAsDataURL(file);
+}
+}
+
+function displayFiles(){
+let stored = JSON.parse(localStorage.getItem("arsiv") || "[]");
+let list = document.getElementById("fileList");
+list.innerHTML="";
+
+stored.forEach((file, index)=>{
+list.innerHTML += `
+<div class="fileItem">
+<strong>${file.name}</strong> 
+<span class="small">(${file.type})</span><br>
+<button onclick="analyzeFile(${index})">Analiz</button>
+<button onclick="openFile(${index})">Aç</button>
+<button onclick="deleteFile(${index})" style="background:red">Sil</button>
+</div>
+`;
+});
+}
+
+function deleteFile(index){
+let stored = JSON.parse(localStorage.getItem("arsiv") || "[]");
+stored.splice(index,1);
+localStorage.setItem("arsiv", JSON.stringify(stored));
+displayFiles();
+}
+
+function openFile(index){
+let stored = JSON.parse(localStorage.getItem("arsiv") || "[]");
+window.open(stored[index].data);
+}
+
+async function analyzeFile(index){
+let stored = JSON.parse(localStorage.getItem("arsiv") || "[]");
+let file = stored[index];
+
+if(file.type !== "PDF"){
+document.getElementById("result").innerHTML="Bu dosya analiz edilemiyor (sadece PDF analiz edilir).";
 return;
 }
 
-let reader = new FileReader();
-reader.onload = async function() {
-let typedarray = new Uint8Array(this.result);
-let pdf = await pdfjsLib.getDocument(typedarray).promise;
-let fullText = "";
+let loadingTask = pdfjsLib.getDocument(file.data);
+let pdf = await loadingTask.promise;
+let fullText="";
 
 for(let i=1;i<=pdf.numPages;i++){
 let page = await pdf.getPage(i);
@@ -46,39 +117,30 @@ fullText += textItems.join(" ").toLowerCase();
 let resultText="";
 
 if(fullText.includes("icra")){
-resultText+="<span class='warning'>⚠️ İcra Dosyası Tespit Edildi</span><br>";
-if(fullText.includes("7 gün")){
-resultText+="İtiraz süresi 7 gün olabilir. Tebligat tarihini kontrol et.<br>";
-}
-if(fullText.includes("haciz")){
-resultText+="Dosya haciz aşamasında olabilir.<br>";
-}
+resultText+="<span class='warning'>⚠️ İcra Dosyası</span><br>";
+if(fullText.includes("7 gün")) resultText+="İtiraz süresi olabilir.<br>";
+if(fullText.includes("haciz")) resultText+="Haciz aşaması olabilir.<br>";
 }
 
 if(fullText.includes("kıdem") || fullText.includes("ihbar") || fullText.includes("fazla mesai")){
-resultText+="<span class='info'>👷 İşçi Alacakları Davası</span><br>";
-resultText+="Kontrol et:<br>";
-resultText+="- Kıdem tazminatı hesaplanmış mı?<br>";
-resultText+="- İhbar tazminatı eklenmiş mi?<br>";
-resultText+="- Fazla mesai doğru hesaplanmış mı?<br>";
-resultText+="- Zamanaşımı (5 yıl) geçmiş mi?<br>";
-}
-
-if(fullText.includes("2 hafta") || fullText.includes("15 gün")){
-resultText+="<span class='warning'>⚠️ Süre Uyarısı: Evrakta süre belirtilmiş olabilir.</span><br>";
+resultText+="<br><span class='info'>👷 İşçi Alacakları Davası</span><br>";
+if(!fullText.includes("kıdem")) resultText+="<span class='suggest'>Kıdem talebi kontrol edilmeli.</span><br>";
+if(!fullText.includes("ihbar")) resultText+="<span class='suggest'>İhbar talebi eksik olabilir.</span><br>";
+if(!fullText.includes("fazla mesai")) resultText+="<span class='suggest'>Fazla mesai talebi yok.</span><br>";
+if(!fullText.includes("yıllık izin")) resultText+="<span class='suggest'>Yıllık izin talebi kontrol edilmeli.</span><br>";
+if(!fullText.includes("faiz")) resultText+="<span class='suggest'>Faiz talebi belirtilmemiş olabilir.</span><br>";
+if(!fullText.includes("tanık")) resultText+="<span class='suggest'>Tanık eklemeyi düşünebilirsin.</span><br>";
 }
 
 if(resultText===""){
-resultText="<span class='safe'>Belirgin risk bulunamadı.</span><br>Evrakı dikkatlice incele.";
+resultText="<span class='safe'>Belirgin risk tespit edilmedi.</span>";
 }
-
-resultText+="<br><br>📌 Bu analiz bilgilendirme amaçlıdır.";
 
 document.getElementById("result").innerHTML=resultText;
-};
-
-reader.readAsArrayBuffer(file);
 }
+
+displayFiles();
+
 </script>
 </body>
 </html>

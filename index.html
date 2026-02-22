@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dava Güvende</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.14.305/pdf.min.js"></script>
+<style>
+body{font-family:Arial;padding:20px;background:#f4f6f9}
+.box{background:white;padding:20px;border-radius:10px;box-shadow:0 0 10px rgba(0,0,0,0.1)}
+button{padding:10px 15px;border:none;background:#0070f3;color:white;border-radius:5px}
+.warning{color:red;font-weight:bold}
+.safe{color:green;font-weight:bold}
+.info{color:#333;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="box">
+<h2>📄 Dava Güvende - Akıllı Dava Analizi</h2>
+<input type="file" id="pdfFile" accept=".pdf"/>
+<br><br>
+<button onclick="analyze()">Analiz Et</button>
+<p id="result"></p>
+</div>
+
+<script>
+async function analyze(){
+let file = document.getElementById("pdfFile").files[0];
+if(!file){
+document.getElementById("result").innerHTML="Lütfen PDF yükleyin.";
+return;
+}
+
+let reader = new FileReader();
+reader.onload = async function() {
+let typedarray = new Uint8Array(this.result);
+let pdf = await pdfjsLib.getDocument(typedarray).promise;
+let fullText = "";
+
+for(let i=1;i<=pdf.numPages;i++){
+let page = await pdf.getPage(i);
+let textContent = await page.getTextContent();
+let textItems = textContent.items.map(item => item.str);
+fullText += textItems.join(" ").toLowerCase();
+}
+
+let resultText="";
+
+if(fullText.includes("icra")){
+resultText+="<span class='warning'>⚠️ İcra Dosyası Tespit Edildi</span><br>";
+if(fullText.includes("7 gün")){
+resultText+="İtiraz süresi 7 gün olabilir. Tebligat tarihini kontrol et.<br>";
+}
+if(fullText.includes("haciz")){
+resultText+="Dosya haciz aşamasında olabilir.<br>";
+}
+}
+
+if(fullText.includes("kıdem") || fullText.includes("ihbar") || fullText.includes("fazla mesai")){
+resultText+="<span class='info'>👷 İşçi Alacakları Davası</span><br>";
+resultText+="Kontrol et:<br>";
+resultText+="- Kıdem tazminatı hesaplanmış mı?<br>";
+resultText+="- İhbar tazminatı eklenmiş mi?<br>";
+resultText+="- Fazla mesai doğru hesaplanmış mı?<br>";
+resultText+="- Zamanaşımı (5 yıl) geçmiş mi?<br>";
+}
+
+if(fullText.includes("2 hafta") || fullText.includes("15 gün")){
+resultText+="<span class='warning'>⚠️ Süre Uyarısı: Evrakta süre belirtilmiş olabilir.</span><br>";
+}
+
+if(resultText===""){
+resultText="<span class='safe'>Belirgin risk bulunamadı.</span><br>Evrakı dikkatlice incele.";
+}
+
+resultText+="<br><br>📌 Bu analiz bilgilendirme amaçlıdır.";
+
+document.getElementById("result").innerHTML=resultText;
+};
+
+reader.readAsArrayBuffer(file);
+}
+</script>
+</body>
+</html>

@@ -2,24 +2,25 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Akıllı Dava Analiz Sistemi PRO</title>
+<title>Akıllı Dava Analiz Sistemi ULTRA</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 <style>
-body{font-family:Arial;background:#f2f4f8;padding:20px;}
+body{font-family:Arial;background:#f4f6fb;padding:20px;}
 button{padding:10px 15px;margin-top:10px;}
 #result{margin-top:20px;padding:15px;background:white;border-radius:10px;}
 .high{color:red;font-weight:bold;font-size:18px;}
 .medium{color:orange;font-weight:bold;font-size:18px;}
 .low{color:green;font-weight:bold;font-size:18px;}
-.box{background:#eef;padding:10px;border-radius:8px;margin-bottom:10px;}
+.box{background:#eef;padding:12px;border-radius:8px;margin-bottom:12px;}
+.anayasa{background:#f9f9f9;padding:10px;border-left:4px solid #444;margin-bottom:8px;}
 </style>
 </head>
 
 <body>
 
-<h2>⚖️ Akıllı Dava Analiz Sistemi PRO</h2>
+<h2>⚖️ Akıllı Dava Analiz Sistemi ULTRA</h2>
 
 <input type="file" id="pdfFile" accept=".pdf">
 <br>
@@ -55,123 +56,85 @@ fullText+=item.str.toLowerCase()+" ";
 }
 
 let result="";
-let riskScore=0;
+let anayasaList=[];
 
-/* ===============================
-   🔴 GELİŞMİŞ İCRA ANALİZİ
-================================ */
+/* ================= ICRA ================= */
 
 if(fullText.includes("icra")){
 
-riskScore=60;
 result+="<div class='high'>🔴 YÜKSEK RİSK: İCRA DOSYASI</div><br>";
 
-if(fullText.includes("haciz")){
-riskScore+=15;
-result+="⚠️ Haciz aşaması tespit edildi.<br>";
+result+="<div class='box'><strong>Önerilen Çıkış Yolları:</strong><br>";
+result+="1️⃣ Faiz indirimi pazarlığı<br>";
+result+="2️⃣ Taksit talebi<br>";
+result+="3️⃣ Süre içindeyse itiraz<br>";
+result+="4️⃣ Usulsüz tebligat kontrolü<br>";
+result+="5️⃣ Yetki itirazı ihtimali<br>";
+result+="6️⃣ Zamanaşımı incelemesi<br>";
+result+="</div>";
+
+anayasaList.push("2","5","10","35","36","90");
 }
 
-if(fullText.includes("7 gün")){
-riskScore+=10;
-result+="⚠️ 7 günlük itiraz süresi kritik.<br>";
-}
-
-if(fullText.includes("tebligat")){
-result+="⚠️ Tebligat usulü kontrol edilmeli (usulsüzlük ihtimali).<br>";
-}
-
-if(fullText.includes("yetki")){
-result+="⚠️ Yetkili icra dairesi kontrol edilmeli.<br>";
-}
-
-if(fullText.includes("faiz")){
-riskScore+=5;
-result+="⚠️ Faiz oranı ve başlangıç tarihi kontrol edilmeli.<br>";
-}
-
-result+="<div class='box'><strong>📉 En Düşük Maliyetli Çözüm:</strong><br>";
-result+="1️⃣ Faiz indirimi teklif et (%20-40 arası pazarlık önerilir)<br>";
-result+="2️⃣ Taksitlendirme talebi<br>";
-result+="3️⃣ Süre içindeyse borca itiraz<br>";
-result+="4️⃣ Menfi tespit (son çare)<br></div>";
-
-result+="Risk Skoru: "+riskScore+"/100<br><br>";
-}
-
-/* ===============================
-   👷 GELİŞMİŞ İŞÇİ ANALİZİ
-================================ */
+/* ================= ISCI ================= */
 
 if(fullText.includes("kıdem") ||
 fullText.includes("ihbar") ||
 fullText.includes("fazla mesai") ||
 fullText.includes("ücret")){
 
-let workerRisk=40;
-
 result+="<div class='medium'>🟠 İŞÇİ ALACAĞI DOSYASI</div><br>";
 
-let strategy="<div class='box'><strong>📌 Stratejik Kontrol:</strong><br>";
+result+="<div class='box'><strong>Stratejik Kontroller:</strong><br>";
+result+="• Hesap cetveli eklenmeli<br>";
+result+="• Zamanaşımı (5 yıl) kontrol<br>";
+result+="• SGK prim uyumu<br>";
+result+="• Faiz başlangıç tarihi<br>";
+result+="• Yazılı delil gücü artırılmalı<br>";
+result+="</div>";
 
-if(fullText.includes("kıdem")){
-workerRisk+=10;
-strategy+="• Kıdem hesaplaması brüt ücret üzerinden kontrol edilmeli.<br>";
+anayasaList.push("2","10","36","48","49","50","55","60","90");
 }
 
-if(fullText.includes("ihbar")){
-strategy+="• Fesih nedeni yazılı delille desteklenmeli.<br>";
+/* ================= ANAYASA DETAY ================= */
+
+function anayasaMadde(madde,aciklama){
+result+="<div class='anayasa'><strong>Anayasa Madde "+madde+":</strong><br>"+aciklama+"</div>";
 }
 
-if(fullText.includes("fazla mesai")){
-workerRisk+=10;
-strategy+="• Fazla mesai bordro ve banka kaydı karşılaştırılmalı.<br>";
+if(anayasaList.includes("2")){
+anayasaMadde("2","Türkiye Cumhuriyeti sosyal bir hukuk devletidir. Devlet işlemleri keyfi olamaz.");
 }
-
-if(fullText.includes("ücret")){
-strategy+="• Faiz başlangıcı fesih tarihi mi kontrol edilmeli.<br>";
+if(anayasaList.includes("5")){
+anayasaMadde("5","Devlet kişinin temel haklarını korumakla yükümlüdür.");
 }
-
-if(fullText.includes("sgk")){
-strategy+="• SGK hizmet dökümü ile prim uyumu kontrol edilmeli.<br>";
+if(anayasaList.includes("10")){
+anayasaMadde("10","Kanun önünde eşitlik ilkesi. Ayrımcılık yapılamaz.");
 }
-
-strategy+="• Hesap cetveli eklenmeli.<br>";
-strategy+="• Zamanaşımı süresi kontrol edilmeli (5 yıl).<br>";
-strategy+="</div>";
-
-result+=strategy;
-result+="Risk Skoru: "+workerRisk+"/100<br><br>";
+if(anayasaList.includes("35")){
+anayasaMadde("35","Mülkiyet hakkı korunur. İcra işlemleri ölçülü olmalıdır.");
 }
-
-/* ===============================
-   📖 AKILLI ANAYASA BAĞLANTISI
-================================ */
-
-function anayasa(madde,text){
-result+="<div class='box'><strong>📖 Anayasa Madde "+madde+":</strong><br>"+text+"</div>";
+if(anayasaList.includes("36")){
+anayasaMadde("36","Hak arama özgürlüğü ve adil yargılanma hakkı güvence altındadır.");
 }
-
-if(fullText.includes("savunma") || fullText.includes("hak arama")){
-anayasa("36","Hak arama özgürlüğü ve adil yargılanma hakkı.");
+if(anayasaList.includes("48")){
+anayasaMadde("48","Çalışma ve sözleşme özgürlüğü korunur.");
 }
-
-if(fullText.includes("mülkiyet")){
-anayasa("35","Mülkiyet hakkı korunur.");
+if(anayasaList.includes("49")){
+anayasaMadde("49","Çalışma hakkı devlet güvencesindedir.");
 }
-
-if(fullText.includes("çalışma")){
-anayasa("49","Çalışma hakkı devlet güvencesindedir.");
+if(anayasaList.includes("50")){
+anayasaMadde("50","Çalışma şartları insan onuruna uygun olmalıdır.");
 }
-
-if(fullText.includes("ücret")){
-anayasa("55","Ücret emeğin karşılığıdır ve korunur.");
+if(anayasaList.includes("55")){
+anayasaMadde("55","Ücret emeğin karşılığıdır ve korunur.");
 }
-
-if(fullText.includes("sgk") || fullText.includes("prim")){
-anayasa("60","Sosyal güvenlik hakkı anayasal güvencedir.");
+if(anayasaList.includes("60")){
+anayasaMadde("60","Sosyal güvenlik hakkı anayasal güvencedir.");
 }
-
-/* =============================== */
+if(anayasaList.includes("90")){
+anayasaMadde("90","Uluslararası insan hakları sözleşmeleri iç hukuka üstünlük sağlar.");
+}
 
 if(result===""){
 result="<div class='low'>Belirgin risk tespit edilmedi.</div>";

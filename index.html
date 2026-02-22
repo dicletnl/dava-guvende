@@ -2,151 +2,69 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Dava Güvende AI - V9 Otomatik Davacı Analizi</title>
+    <title>Dava Güvende AI - V10 (Davacı Odaklı)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
-        :root { --p: #0984e3; --s: #6c5ce7; --accent: #00b894; --danger: #d63031; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #dfe6e9; padding: 30px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        :root { --primary: #0984e3; --secondary: #6c5ce7; --success: #00b894; --danger: #d63031; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
-        .upload-area { 
-            border: 3px dashed var(--p); padding: 40px; text-align: center; border-radius: 15px; 
-            background: #f1f9ff; transition: 0.3s; cursor: pointer; position: relative;
+        /* Dosya Yükleme Alanı */
+        .upload-wrapper { 
+            border: 3px dashed var(--primary); padding: 40px; text-align: center; border-radius: 12px; 
+            background: #f8fbff; cursor: pointer; position: relative; transition: 0.3s;
         }
-        .upload-area:hover { background: #e1f0ff; border-color: var(--s); }
-        .upload-area p { font-size: 18px; color: var(--p); font-weight: bold; }
+        .upload-wrapper:hover { background: #eff7ff; border-color: var(--secondary); }
+        .upload-wrapper input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
         
-        #pdfFile { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
-
-        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
-        .card { padding: 25px; border-radius: 12px; background: white; border-top: 8px solid var(--p); box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
-        .attack { border-top-color: var(--accent); background: #f9fffb; }
-        .warning { border-top-color: var(--danger); background: #fff9f9; }
+        .loading { display: none; text-align: center; margin: 20px; font-weight: bold; color: var(--secondary); }
         
-        .petition-area { grid-column: span 2; }
-        textarea { width: 100%; height: 300px; padding: 15px; border-radius: 8px; border: 1px solid #ccc; font-family: 'Courier New', monospace; margin-top: 10px; }
+        /* Sonuç Kartları */
+        .result-section { margin-top: 25px; display: none; }
+        .card { padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid var(--primary); background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .card.is-davaci { border-color: var(--success); background: #f6fff9; }
+        .card.uyari { border-color: var(--danger); background: #fff6f6; }
         
-        #loading { display: none; text-align: center; margin: 20px; font-weight: bold; color: var(--s); }
+        textarea { width: 100%; height: 250px; margin-top: 15px; padding: 15px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Courier New', monospace; font-size: 13px; }
+        h3 { margin-top: 0; color: #2d3436; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; background: var(--primary); color: white; margin-bottom: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="text-align: center; margin-bottom: 30px;">
-        <h2>⚖️ Dava Güvende AI - V9</h2>
-        <span style="background: var(--p); color: white; padding: 5px 15px; border-radius: 20px; font-size: 14px;">Davacı (İşçi) Strateji Modu</span>
+    <div style="text-align: center; margin-bottom: 25px;">
+        <h2>⚖️ Dava Güvende AI <small>v10.0</small></h2>
+        <p>İşçi Hakları ve Davacı Strateji Merkezi</p>
     </div>
 
-    <div class="upload-area" id="dropZone">
-        <p id="uploadStatus">📂 PDF Dosyasını Buraya Sürükleyin veya Tıklayın</p>
-        <small>Dosya seçildiği an analiz otomatik başlar.</small>
+    <div class="upload-wrapper" id="dropZone">
+        <div id="uploadContent">
+            <img src="https://cdn-icons-png.flaticon.com/512/1091/1091916.png" width="50" style="margin-bottom: 10px;">
+            <p><strong>PDF Dosyasını Buraya Bırakın veya Tıklayın</strong></p>
+            <small>Yeni dosya seçildiği an eski analiz silinir ve yenisi başlar.</small>
+        </div>
         <input type="file" id="pdfFile" accept=".pdf">
     </div>
 
-    <div id="loading">⌛ Dosya okunuyor ve hukuki veriler işleniyor...</div>
-    <div id="result"></div>
+    <div id="loading" class="loading">⌛ Dosya taranıyor, hukuki strateji oluşturuluyor...</div>
+
+    <div id="result" class="result-section">
+        </div>
 </div>
 
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    // Dosya seçildiği an tetiklenen olay
-    document.getElementById('pdfFile').addEventListener('change', function(e) {
+    const fileInput = document.getElementById('pdfFile');
+    const resultDiv = document.getElementById('result');
+    const loading = document.getElementById('loading');
+
+    fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
-        if (file) {
-            document.getElementById('uploadStatus').innerText = "✅ Seçilen Dosya: " + file.name;
-            analyzePDF(file);
-        }
-    });
+        if (!file) return;
 
-    async function analyzePDF(file) {
-        const loading = document.getElementById('loading');
-        const resultDiv = document.getElementById('result');
-        
-        loading.style.display = "block";
+        // 1. Ekranı temizle ve hazırlık yap
+        resultDiv.style.display = "none";
         resultDiv.innerHTML = "";
-
-        try {
-            const reader = new FileReader();
-            reader.onload = async function() {
-                const typedarray = new Uint8Array(this.result);
-                const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                let fullText = "";
-                
-                for(let i=1; i<=pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const content = await page.getTextContent();
-                    fullText += content.items.map(item => item.str.toLowerCase()).join(" ") + " ";
-                }
-                
-                loading.style.display = "none";
-                renderDavaciAnalizi(fullText);
-            };
-            reader.readAsArrayBuffer(file);
-        } catch (err) {
-            loading.innerText = "❌ Hata: Dosya işlenemedi.";
-        }
-    }
-
-    function renderDavaciAnalizi(text) {
-        // İşçilik terimlerini kontrol et
-        const keywords = ["kıdem", "ihbar", "işçi", "alacak", "maaş", "ücret", "fazla mesai", "tazminat"];
-        const isWorkerCase = keywords.some(word => text.includes(word));
-
-        if(!isWorkerCase) {
-            document.getElementById('result').innerHTML = "<div class='card warning'>🔍 Bu belge bir iş davası içeriği barındırmıyor olabilir. Ancak yine de genel bir inceleme yapılması önerilir.</div>";
-            return;
-        }
-
-        let html = `
-        <div class="result-grid">
-            <div class="card attack">
-                <h3>🚀 Davacı Hücum Hamleleri</h3>
-                <ul>
-                    <li><strong>Emsal Ücret Talebi:</strong> Maaşınız düşük gösteriliyorsa, mahkemeden sendikalardan veya meslek odalarından "emsal ücret" sorgulanmasını talep edin.</li>
-                    <li><strong>Bordro İncelemesi:</strong> Eğer bordroda fazla mesai kısmı boşsa veya sembolik rakamlar yazıyorsa, buna itiraz ederek tanıkla gerçek mesaiyi ispatlayın.</li>
-                    <li><strong>Kıdem Tazminatı:</strong> Son brüt maaşınıza yol ve yemek yardımlarını eklemeyi unutmayın; tazminat miktarı artacaktır.</li>
-                </ul>
-            </div>
-
-            <div class="card warning">
-                <h3>⚠️ Hak Kaybı Uyarıları</h3>
-                <ul>
-                    <li><strong>Arabuluculuk Tarihi:</strong> Arabuluculuk son tutanak tarihinden itibaren 2 hafta içinde davayı açmalısınız.</li>
-                    <li><strong>Fesih Sebebi:</strong> İşverenin SGK'ya bildirdiği "çıkış kodu" ile sizin iddianız uyuşuyor mu? Kod 04 mü yoksa 29 mu? Kontrol edin.</li>
-                    <li><strong>Kötüniyet Tazminatı:</strong> Eğer sendikal nedenle veya hakkınızı aradığınız için kovulduysanız 3 katı tazminat isteme hakkınızı dilekçeye ekleyin.</li>
-                </ul>
-            </div>
-
-            <div class="card petition-area">
-                <h3>📝 Hazır Davacı Dilekçe Metni</h3>
-                <p>Analiz edilen verilere göre hazırlanan "Belirsiz Alacak" dava dilekçesi:</p>
-                <textarea>
-[ŞEHİR] NÖBETÇİ İŞ MAHKEMESİ HAKİMLİĞİ'NE
-(Zorunlu Arabuluculuk Anlaşmazlık Tutanağı Ektedir)
-
-DAVACI: [Adınız Soyadınız]
-DAVALI: [İşveren Şirket Adı]
-
-KONU: Fazlaya dair haklarımız saklı kalmak kaydıyla; Kıdem tazminatı, İhbar tazminatı, Fazla çalışma ücreti, Hafta tatili ücreti ve UBGT (Dini-Milli Bayram) alacaklarımızın tahsili talebidir.
-
-AÇIKLAMALAR:
-1- Davacı taraf olarak davalı işyerinde [Tarih] - [Tarih] arasında [Görev] pozisyonunda çalıştım.
-2- İş sözleşmem haklı bir neden olmaksızın feshedilmiştir. Tazminatlarım ödenmemiştir.
-3- Çalıştığım süre boyunca haftalık [Saat] saat çalışmama rağmen fazla mesai ücretlerim eksik yatırılmıştır.
-4- Arabuluculuk aşamasında anlaşma sağlanamadığı için huzurdaki davayı açma zorunluluğumuz hasıl olmuştur.
-
-DELİLLER: SGK Kayıtları, İşyeri Özlük Dosyası, Emsal Ücret Araştırması, Tanık Beyanları, Bilirkişi İncelemesi.
-
-SONUÇ: Alacak kalemlerimizin belirsiz alacak davası olarak kabulü ile, mevduat faiziyle birlikte davalıdan tahsiline karar verilmesini arz ve talep ederim.
-
-AD SOYAD / İMZA</textarea>
-            </div>
-        </div>`;
-
-        document.getElementById('result').innerHTML = html;
-    }
-</script>
-
-</body>
-</html>
+        loading.style.display = "block";

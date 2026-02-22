@@ -20,4 +20,124 @@
         .my-defense { border-color: var(--danger); background: #fff5f5; }
         .my-attack { border-color: var(--success); background: #f0fff4; }
         
-        textarea { width: 100%; height: 300px; padding:
+        textarea { width: 100%; height: 300px; padding: 15px; border-radius: 5px; border: 1px solid #ddd; font-family: 'Courier New', monospace; font-size: 14px; background: #fafafa; }
+        .badge { background: #34495e; color: white; padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2>⚖️ Dava Güvende AI <small>v12.0</small></h2>
+        <p><strong>"Senin Hakların, Benim Sorumluluğum."</strong></p>
+    </div>
+
+    <div class="upload-section">
+        <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 10px;">
+        <p><small>Dosyayı seçin ve aşağıdaki butona basın.</small></p>
+        <button class="btn-analyze" onclick="startAnalysis()">🚀 DOSYAYI ANALİZ ET VE STRATEJİMİ KUR</button>
+    </div>
+
+    <div id="status"></div>
+
+    <div id="result" class="result-box">
+        </div>
+</div>
+
+<script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+    async function startAnalysis() {
+        const fileInput = document.getElementById('pdfFile');
+        const status = document.getElementById('status');
+        const resultBox = document.getElementById('result');
+        const file = fileInput.files[0];
+
+        if (!file) {
+            status.innerHTML = "❌ Önce bir dosya seçmelisin ki harekete geçebileyim!";
+            return;
+        }
+
+        status.innerHTML = "⌛ Dosyayı okuyorum, bu davayı nasıl kazanacağımızı planlıyorum...";
+        resultBox.style.display = "none";
+        resultBox.innerHTML = "";
+
+        const reader = new FileReader();
+        reader.onload = async function() {
+            try {
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument(typedarray).promise;
+                let text = "";
+
+                for(let i=1; i<=pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    text += content.items.map(s => s.str).join(" ").toLowerCase() + " ";
+                }
+
+                if (text.length < 20) throw new Error("Dosya boş veya taranmış resim. Okuyamıyorum!");
+
+                renderPersonalStrategy(text);
+                status.innerHTML = "✅ Plan hazır, dosyayı çözdüm!";
+            } catch (err) {
+                status.innerHTML = "❌ Sorun Çıktı: " + err.message;
+            }
+        };
+        reader.readAsArrayBuffer(file);
+    }
+
+    function renderPersonalStrategy(text) {
+        const resultBox = document.getElementById('result');
+        resultBox.style.display = "block";
+
+        let isWork = /kıdem|ihbar|işçi|maaş|ücret|mesai|tazminat/.test(text);
+        
+        let html = "";
+
+        if (isWork) {
+            html += `
+            <div class="card my-attack">
+                <span class="badge">BİZİM STRATEJİMİZ: DAVACIYIZ</span>
+                <h3>✊ Paramızı Almak İçin Yapacaklarım</h3>
+                <p>Bu dosyayı inceledim ve hakkımızı yedirmeye niyetim yok. İşte bu davada izleyeceğim yol:</p>
+                <ul>
+                    <li><strong>Maaşımı Kanıtlayacağım:</strong> Eğer beni asgari ücretten gösterdilerse, emsal ücret araştırması isteyerek gerçek maaşımı mahkemeye kabul ettireceğim.</li>
+                    <li><strong>Fazla Mesaimi Alacağım:</strong> Tanıklarımla beraber akşam kaçlara kadar çalıştığımı, bayramlarda nasıl ter döktüğümü tek tek ispatlayacağım.</li>
+                    <li><strong>Zamanaşımına Dikkat:</strong> 5 yıllık süreyi geçirmeden hemen hamlemi yapıyorum.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>📝 Hazırladığım Dava Dilekçesi</h3>
+                <p>Bu dilekçeyi ben yazıyormuşum gibi hazırladım, senin adına mahkemeye sunmaya hazırız:</p>
+                <textarea>
+[ŞEHİR] NÖBETÇİ İŞ MAHKEMESİNE
+(Arabuluculuk Anlaşmazlık Tutanağı Ektedir)
+
+DAVACI: [Adın Soyadın]
+DAVALI: [İşveren Şirket]
+
+KONU: Alın terimin karşılığı olan kıdem, ihbar ve fazla mesai alacaklarımın faiziyle tahsili talebimdir.
+
+AÇIKLAMALAR:
+1- Davalı işyerinde ... tarihinden beri emek verdim.
+2- İş akdim haksız şekilde feshedildi ve tazminatlarım tarafıma ödenmedi.
+3- Gece gündüz demeden yaptığım fazla çalışmaların karşılığını hiçbir zaman alamadım.
+4- Arabuluculuk masasında anlaşma sağlanamadığı için bu davayı açmak zorunda kaldım.
+
+DELİLLERİM: SGK kayıtlarım, banka dökümlerim, tanıklarım ve bilirkişi incelemesi.
+
+SONUÇ: Haklı davamın kabulü ile alacaklarımın davalıdan tahsiline karar verilmesini saygılarımla arz ederim.
+
+[AD SOYAD / İMZA]</textarea>
+            </div>`;
+        } else {
+            html = `<div class="card">🔍 Dosyayı okudum ama işçilik alacağına dair bir ipucu göremedim. Eğer bu bir borç dosyasıysa (İcra), stratejimi ona göre değiştirebilirim.</div>`;
+        }
+
+        resultBox.innerHTML = html;
+    }
+</script>
+
+</body>
+</html>

@@ -2,69 +2,122 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Dava Güvende AI - V10 (Davacı Odaklı)</title>
+    <title>Dava Güvende AI - V11 (Hata Ayıklama Modu)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
-        :root { --primary: #0984e3; --secondary: #6c5ce7; --success: #00b894; --danger: #d63031; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        
-        /* Dosya Yükleme Alanı */
-        .upload-wrapper { 
-            border: 3px dashed var(--primary); padding: 40px; text-align: center; border-radius: 12px; 
-            background: #f8fbff; cursor: pointer; position: relative; transition: 0.3s;
-        }
-        .upload-wrapper:hover { background: #eff7ff; border-color: var(--secondary); }
-        .upload-wrapper input[type="file"] { position: absolute; width: 100%; height: 100%; top: 0; left: 0; opacity: 0; cursor: pointer; }
-        
-        .loading { display: none; text-align: center; margin: 20px; font-weight: bold; color: var(--secondary); }
-        
-        /* Sonuç Kartları */
-        .result-section { margin-top: 25px; display: none; }
-        .card { padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 6px solid var(--primary); background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .card.is-davaci { border-color: var(--success); background: #f6fff9; }
-        .card.uyari { border-color: var(--danger); background: #fff6f6; }
-        
-        textarea { width: 100%; height: 250px; margin-top: 15px; padding: 15px; border-radius: 8px; border: 1px solid #ddd; font-family: 'Courier New', monospace; font-size: 13px; }
-        h3 { margin-top: 0; color: #2d3436; }
-        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; background: var(--primary); color: white; margin-bottom: 10px; }
+        :root { --p: #0984e3; --s: #6c5ce7; --ok: #00b894; --err: #d63031; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .drop-zone { border: 3px dashed var(--p); padding: 30px; text-align: center; border-radius: 10px; background: #f0f9ff; cursor: pointer; transition: 0.3s; }
+        .drop-zone:hover { background: #e3f2fd; }
+        #pdfFile { display: none; }
+        .status-msg { margin-top: 15px; font-weight: bold; text-align: center; }
+        .card { border-left: 6px solid var(--p); background: #fff; padding: 20px; margin-top: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .attack-card { border-color: var(--ok); background: #f6fff9; }
+        textarea { width: 100%; height: 250px; margin-top: 10px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; font-family: monospace; }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div style="text-align: center; margin-bottom: 25px;">
-        <h2>⚖️ Dava Güvende AI <small>v10.0</small></h2>
-        <p>İşçi Hakları ve Davacı Strateji Merkezi</p>
+    <div style="text-align: center; margin-bottom: 20px;">
+        <h2>⚖️ Dava Güvende AI <small>v11.0</small></h2>
+        <p>İşçi Hakları / Davacı Strateji Merkezi</p>
     </div>
 
-    <div class="upload-wrapper" id="dropZone">
-        <div id="uploadContent">
-            <img src="https://cdn-icons-png.flaticon.com/512/1091/1091916.png" width="50" style="margin-bottom: 10px;">
-            <p><strong>PDF Dosyasını Buraya Bırakın veya Tıklayın</strong></p>
-            <small>Yeni dosya seçildiği an eski analiz silinir ve yenisi başlar.</small>
-        </div>
+    <div class="drop-zone" onclick="document.getElementById('pdfFile').click()">
+        <p id="labelTxt">📁 PDF Dosyasını Buraya Tıklayarak Yükleyin</p>
         <input type="file" id="pdfFile" accept=".pdf">
     </div>
 
-    <div id="loading" class="loading">⌛ Dosya taranıyor, hukuki strateji oluşturuluyor...</div>
+    <div id="status" class="status-msg"></div>
 
-    <div id="result" class="result-section">
+    <div id="result" class="hidden">
         </div>
 </div>
 
 <script>
+    // PDF.js Ayarları
+    const pdfjsLib = window['pdfjs-dist/build/pdf'];
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
     const fileInput = document.getElementById('pdfFile');
+    const status = document.getElementById('status');
     const resultDiv = document.getElementById('result');
-    const loading = document.getElementById('loading');
+    const labelTxt = document.getElementById('labelTxt');
 
     fileInput.addEventListener('change', async function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // 1. Ekranı temizle ve hazırlık yap
-        resultDiv.style.display = "none";
+        // Reset
+        status.innerHTML = "⌛ Dosya okunuyor...";
+        status.style.color = "var(--s)";
+        resultDiv.classList.add('hidden');
         resultDiv.innerHTML = "";
-        loading.style.display = "block";
+        labelTxt.innerText = "✅ Seçilen: " + file.name;
+
+        const reader = new FileReader();
+        reader.onload = async function() {
+            try {
+                const typedarray = new Uint8Array(this.result);
+                const pdf = await pdfjsLib.getDocument({data: typedarray}).promise;
+                let fullText = "";
+
+                for(let i=1; i<=pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const content = await page.getTextContent();
+                    const strings = content.items.map(item => item.str);
+                    fullText += strings.join(" ").toLowerCase() + " ";
+                }
+
+                if (fullText.trim().length < 10) {
+                    throw new Error("PDF metni okunamadı. Bu dosya bir resim/tarama olabilir.");
+                }
+
+                analyzeWorkerRights(fullText);
+
+            } catch (err) {
+                status.innerHTML = "❌ Hata: " + err.message;
+                status.style.color = "var(--err)";
+            } finally {
+                // Aynı dosyayı tekrar seçebilmek için input'u sıfırla
+                fileInput.value = "";
+            }
+        };
+
+        reader.onerror = () => status.innerHTML = "❌ Dosya okuma hatası!";
+        reader.readAsArrayBuffer(file);
+    });
+
+    function analyzeWorkerRights(text) {
+        status.innerHTML = "✅ Analiz Tamamlandı";
+        status.style.color = "var(--ok)";
+        resultDiv.classList.remove('hidden');
+
+        // Davacı (İşçi) Terim Kontrolü
+        const isWorker = /kıdem|ihbar|işçi|maaş|ücret|mesai|tazminat|hizmet|fesih/.test(text);
+
+        if(!isWorker) {
+            resultDiv.innerHTML = "<div class='card'>🔍 Belge okundu ancak iş hukuku ile ilgili anahtar kelimeler bulunamadı. Lütfen bir işçi alacağı belgesi yükleyin.</div>";
+            return;
+        }
+
+        resultDiv.innerHTML = `
+            <div class="card attack-card">
+                <h3>🚀 Davacı (İşçi) Güçlendirme Hamleleri</h3>
+                <ul>
+                    <li><strong>Emsal Ücret Araştırması:</strong> Maaşınızın SGK'ya eksik bildirildiğini düşünüyorsanız, mahkemeden emsal ücret araştırması yapmasını isteyin.</li>
+                    <li><strong>Tanık Listesi:</strong> Fazla mesaiyi kanıtlamak için işyerinde sizinle aynı dönemde çalışmış ancak şu an işten ayrılmış (husumeti olmayan) tanıklar seçin.</li>
+                    <li><strong>Bilirkişi Raporu:</strong> Rapor geldiğinde hesaplamaların "Brüt" üzerinden yapıldığından emin olun.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>📝 Hazır Hücum Dilekçesi (Belirsiz Alacak)</h3>
+                <textarea>
+[ŞEHİR] NÖBETÇİ İŞ MAHKEMESİNE
+DAVACI: [Ad Soyad]
+DAVALI: [İşveren Şirket]
+KONU:

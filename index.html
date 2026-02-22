@@ -2,65 +2,89 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Dava Güvende AI - V12 (Bizim Davamız)</title>
+    <title>Dava Güvende AI - V13 (Çift Yönlü Analiz)</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
-        :root { --p: #2c3e50; --s: #e67e22; --danger: #c0392b; --success: #27ae60; }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: #ecf0f1; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); }
+        :root { --davaci-color: #00b894; --davali-color: #d63031; --dark: #2d3436; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
         
-        .upload-section { background: #fdfdfd; border: 2px dashed #bdc3c7; padding: 30px; text-align: center; border-radius: 10px; }
-        .btn-analyze { background: var(--p); color: white; border: none; padding: 15px 40px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 18px; margin-top: 20px; transition: 0.3s; width: 100%; }
-        .btn-analyze:hover { background: #34495e; transform: translateY(-2px); }
+        /* Ekranı İkiye Bölme */
+        .split-container { display: flex; height: 100vh; width: 100vw; }
         
-        #status { margin-top: 15px; text-align: center; font-weight: bold; color: var(--s); }
-        .result-box { margin-top: 30px; display: none; }
+        .side { flex: 1; padding: 30px; overflow-y: auto; transition: 0.3s; position: relative; }
+        .davaci-side { background: #f0fff4; border-right: 2px solid #ddd; }
+        .davali-side { background: #fff5f5; }
+
+        h2 { text-align: center; text-transform: uppercase; letter-spacing: 2px; }
+        .davaci-title { color: var(--davaci-color); }
+        .davali-title { color: var(--davali-color); }
+
+        /* Yükleme Alanları */
+        .upload-box { background: white; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 10px; margin-bottom: 20px; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; margin-top: 10px; }
+        .btn-davaci { background: var(--davaci-color); }
+        .btn-davali { background: var(--davali-color); }
+
+        /* Yapay Zeka Sonuç Kartları */
+        .ai-card { background: white; border-radius: 10px; padding: 20px; margin-top: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-top: 5px solid; }
+        .ai-davaci { border-top-color: var(--davaci-color); }
+        .ai-davali { border-top-color: var(--davali-color); }
+
+        textarea { width: 100%; height: 200px; margin-top: 10px; border-radius: 5px; border: 1px solid #ddd; padding: 10px; font-family: monospace; }
+        .loading-spinner { display: none; color: #666; font-style: italic; }
         
-        .card { padding: 20px; border-radius: 10px; margin-bottom: 20px; border-left: 8px solid var(--p); background: #fff; box-shadow: 0 4px 10px rgba(0,0,0,0.05); }
-        .my-defense { border-color: var(--danger); background: #fff5f5; }
-        .my-attack { border-color: var(--success); background: #f0fff4; }
-        
-        textarea { width: 100%; height: 300px; padding: 15px; border-radius: 5px; border: 1px solid #ddd; font-family: 'Courier New', monospace; font-size: 14px; background: #fafafa; }
-        .badge { background: #34495e; color: white; padding: 5px 12px; border-radius: 15px; font-size: 12px; font-weight: bold; }
+        .vs-badge { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--dark); color: white; padding: 15px; border-radius: 50%; font-weight: bold; z-index: 10; border: 4px solid white; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div style="text-align: center; margin-bottom: 20px;">
-        <h2>⚖️ Dava Güvende AI <small>v12.0</small></h2>
-        <p><strong>"Senin Hakların, Benim Sorumluluğum."</strong></p>
-    </div>
+<div class="vs-badge">VS</div>
 
-    <div class="upload-section">
-        <input type="file" id="pdfFile" accept=".pdf" style="margin-bottom: 10px;">
-        <p><small>Dosyayı seçin ve aşağıdaki butona basın.</small></p>
-        <button class="btn-analyze" onclick="startAnalysis()">🚀 DOSYAYI ANALİZ ET VE STRATEJİMİ KUR</button>
-    </div>
-
-    <div id="status"></div>
-
-    <div id="result" class="result-box">
+<div class="split-container">
+    
+    <div class="side davaci-side" id="davaciPanel">
+        <h2 class="davaci-title">🟢 DAVACI MODU</h2>
+        <p style="text-align:center">"Hakkımı Söke Söke Alacağım"</p>
+        
+        <div class="upload-box">
+            <strong>Mağduriyet Belgesi Yükle</strong><br><br>
+            <input type="file" id="pdfDavaci" accept=".pdf"><br>
+            <button class="btn btn-davaci" onclick="process('davaci')">AI ANALİZİ BAŞLAT</button>
         </div>
+        
+        <div id="loading-davaci" class="loading-spinner">AI Strateji oluşturuyor...</div>
+        <div id="result-davaci"></div>
+    </div>
+
+    <div class="side davali-side" id="davaliPanel">
+        <h2 class="davali-title">🔴 DAVALI MODU</h2>
+        <p style="text-align:center">"Haksız Talepleri Reddediyorum"</p>
+        
+        <div class="upload-box">
+            <strong>Tebligat / Ödeme Emri Yükle</strong><br><br>
+            <input type="file" id="pdfDavali" accept=".pdf"><br>
+            <button class="btn btn-davali" onclick="process('davali')">AI SAVUNMA KUR</button>
+        </div>
+
+        <div id="loading-davali" class="loading-spinner">AI Savunma kalkanı hazırlıyor...</div>
+        <div id="result-davali"></div>
+    </div>
+
 </div>
 
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function startAnalysis() {
-        const fileInput = document.getElementById('pdfFile');
-        const status = document.getElementById('status');
-        const resultBox = document.getElementById('result');
+    async function process(mode) {
+        const fileInput = document.getElementById('pdf' + mode.charAt(0).toUpperCase() + mode.slice(1));
         const file = fileInput.files[0];
+        const loading = document.getElementById('loading-' + mode);
+        const resultDiv = document.getElementById('result-' + mode);
 
-        if (!file) {
-            status.innerHTML = "❌ Önce bir dosya seçmelisin ki harekete geçebileyim!";
-            return;
-        }
+        if (!file) return alert("Lütfen önce dosya seç!");
 
-        status.innerHTML = "⌛ Dosyayı okuyorum, bu davayı nasıl kazanacağımızı planlıyorum...";
-        resultBox.style.display = "none";
-        resultBox.innerHTML = "";
+        loading.style.display = "block";
+        resultDiv.innerHTML = "";
 
         const reader = new FileReader();
         reader.onload = async function() {
@@ -68,74 +92,58 @@
                 const typedarray = new Uint8Array(this.result);
                 const pdf = await pdfjsLib.getDocument(typedarray).promise;
                 let text = "";
-
                 for(let i=1; i<=pdf.numPages; i++) {
                     const page = await pdf.getPage(i);
                     const content = await page.getTextContent();
-                    text += content.items.map(s => s.str).join(" ").toLowerCase() + " ";
+                    text += content.items.map(s => s.str).join(" ").toLowerCase();
                 }
-
-                if (text.length < 20) throw new Error("Dosya boş veya taranmış resim. Okuyamıyorum!");
-
-                renderPersonalStrategy(text);
-                status.innerHTML = "✅ Plan hazır, dosyayı çözdüm!";
+                
+                renderAI(mode, text);
             } catch (err) {
-                status.innerHTML = "❌ Sorun Çıktı: " + err.message;
+                alert("Hata: " + err.message);
+            } finally {
+                loading.style.display = "none";
             }
         };
         reader.readAsArrayBuffer(file);
     }
 
-    function renderPersonalStrategy(text) {
-        const resultBox = document.getElementById('result');
-        resultBox.style.display = "block";
-
-        let isWork = /kıdem|ihbar|işçi|maaş|ücret|mesai|tazminat/.test(text);
-        
+    function renderAI(mode, text) {
+        const target = document.getElementById('result-' + mode);
         let html = "";
 
-        if (isWork) {
-            html += `
-            <div class="card my-attack">
-                <span class="badge">BİZİM STRATEJİMİZ: DAVACIYIZ</span>
-                <h3>✊ Paramızı Almak İçin Yapacaklarım</h3>
-                <p>Bu dosyayı inceledim ve hakkımızı yedirmeye niyetim yok. İşte bu davada izleyeceğim yol:</p>
+        if (mode === 'davaci') {
+            html = `
+            <div class="ai-card ai-davaci">
+                <h3>🧠 AI Hücum Stratejisi</h3>
+                <p><strong>Dosyayı okudum, alacaklarımızı almak için planım şu:</strong></p>
                 <ul>
-                    <li><strong>Maaşımı Kanıtlayacağım:</strong> Eğer beni asgari ücretten gösterdilerse, emsal ücret araştırması isteyerek gerçek maaşımı mahkemeye kabul ettireceğim.</li>
-                    <li><strong>Fazla Mesaimi Alacağım:</strong> Tanıklarımla beraber akşam kaçlara kadar çalıştığımı, bayramlarda nasıl ter döktüğümü tek tek ispatlayacağım.</li>
-                    <li><strong>Zamanaşımına Dikkat:</strong> 5 yıllık süreyi geçirmeden hemen hamlemi yapıyorum.</li>
+                    <li>Belgede eksik ödenen kalemleri saptadım.</li>
+                    <li><strong>İddiam:</strong> "Alın terim ödenmedi, iş akdi haksız feshedildi."</li>
+                    <li><strong>AI Hamlesi:</strong> Emsal ücret araştırması isteyerek tazminatı en üst sınırdan hesaplatacağım.</li>
                 </ul>
-            </div>
-
-            <div class="card">
-                <h3>📝 Hazırladığım Dava Dilekçesi</h3>
-                <p>Bu dilekçeyi ben yazıyormuşum gibi hazırladım, senin adına mahkemeye sunmaya hazırız:</p>
                 <textarea>
-[ŞEHİR] NÖBETÇİ İŞ MAHKEMESİNE
-(Arabuluculuk Anlaşmazlık Tutanağı Ektedir)
-
-DAVACI: [Adın Soyadın]
-DAVALI: [İşveren Şirket]
-
-KONU: Alın terimin karşılığı olan kıdem, ihbar ve fazla mesai alacaklarımın faiziyle tahsili talebimdir.
-
-AÇIKLAMALAR:
-1- Davalı işyerinde ... tarihinden beri emek verdim.
-2- İş akdim haksız şekilde feshedildi ve tazminatlarım tarafıma ödenmedi.
-3- Gece gündüz demeden yaptığım fazla çalışmaların karşılığını hiçbir zaman alamadım.
-4- Arabuluculuk masasında anlaşma sağlanamadığı için bu davayı açmak zorunda kaldım.
-
-DELİLLERİM: SGK kayıtlarım, banka dökümlerim, tanıklarım ve bilirkişi incelemesi.
-
-SONUÇ: Haklı davamın kabulü ile alacaklarımın davalıdan tahsiline karar verilmesini saygılarımla arz ederim.
-
-[AD SOYAD / İMZA]</textarea>
+[MAHKEMEYE]
+Davacıyım, hakkım olan kıdem ve ihbar tazminatlarımın faiziyle birlikte davalıdan tahsilini, alacaklarımın 'Belirsiz Alacak' olarak değerlendirilmesini arz ederim.
+İMZA: [Adın Soyadın]</textarea>
             </div>`;
         } else {
-            html = `<div class="card">🔍 Dosyayı okudum ama işçilik alacağına dair bir ipucu göremedim. Eğer bu bir borç dosyasıysa (İcra), stratejimi ona göre değiştirebilirim.</div>`;
+            html = `
+            <div class="ai-card ai-davali">
+                <h3>🧠 AI Savunma Stratejisi</h3>
+                <p><strong>Bu borç/dava bana karşı açılmış. Savunma hattım hazır:</strong></p>
+                <ul>
+                    <li><strong>İtirazım:</strong> "Borcum yoktur, zamanaşımı söz konusudur."</li>
+                    <li><strong>AI Hamlesi:</strong> Karşı tarafın iddialarının ispatlanamadığını, belgelerin geçersiz olduğunu savunacağım.</li>
+                    <li><strong>Sıyrılma Planı:</strong> Arabuluculuk usul hatalarını kullanarak davayı reddettireceğim.</li>
+                </ul>
+                <textarea>
+[MAHKEMEYE]
+Davalıyım, haksız açılan bu davanın reddini savunuyorum. Karşı tarafın iddiaları asılsızdır, borç zamanaşımına uğramıştır. 
+İMZA: [Adın Soyadın]</textarea>
+            </div>`;
         }
-
-        resultBox.innerHTML = html;
+        target.innerHTML = html;
     }
 </script>
 

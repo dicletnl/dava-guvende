@@ -1,29 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Dava Analiz Sistemi</title>
+
+<!-- PDF.js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+<style>
+body{font-family:Arial;padding:20px;background:#f4f6f9;}
+button{padding:10px 15px;margin-top:10px;}
+#result{margin-top:20px;padding:15px;background:white;border-radius:8px;}
+.warning{color:red;font-weight:bold;}
+.info{color:blue;font-weight:bold;}
+</style>
+</head>
+
+<body>
+
+<h2>📂 Dava Analiz Sistemi</h2>
+
+<input type="file" id="pdfFile" accept=".pdf">
+<br>
+<button onclick="analyzePDF()">Analiz Et</button>
+
+<div id="result"></div>
+
 <script>
-async function analyzePDF() {
+
+pdfjsLib.GlobalWorkerOptions.workerSrc =
+'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+async function analyzePDF(){
 
 const file = document.getElementById("pdfFile").files[0];
-if (!file) {
-alert("Lütfen bir dosya seçin.");
+if(!file){
+alert("Lütfen PDF seçin.");
 return;
 }
 
 const reader = new FileReader();
 
-reader.onload = async function() {
+reader.onload = async function(){
 
 const typedarray = new Uint8Array(this.result);
 const pdf = await pdfjsLib.getDocument(typedarray).promise;
 
 let fullText = "";
-for (let i = 1; i <= pdf.numPages; i++) {
+
+for(let i=1;i<=pdf.numPages;i++){
 const page = await pdf.getPage(i);
 const content = await page.getTextContent();
-content.items.forEach(item => {
-fullText += item.str.toLowerCase() + " ";
+content.items.forEach(item=>{
+fullText += item.str.toLowerCase()+" ";
 });
 }
 
-let resultText = "";
+let resultText="";
 
 /* ==============================
    🔴 İCRA ANALİZİ
@@ -31,86 +64,86 @@ let resultText = "";
 
 if(fullText.includes("icra")){
 
-resultText += "<span style='color:red;font-size:18px;font-weight:bold'>🔴 YÜKSEK RİSK: İCRA DOSYASI TESPİT EDİLDİ</span><br><br>";
+resultText+="<div class='warning'>🔴 YÜKSEK RİSK: İCRA DOSYASI TESPİT EDİLDİ</div><br>";
 
 if(fullText.includes("7 gün")){
-resultText += "⚠️ 7 günlük itiraz süresi olabilir.<br>";
+resultText+="⚠️ 7 günlük itiraz süresi olabilir.<br>";
 }
 
 if(fullText.includes("haciz")){
-resultText += "⚠️ Dosya haciz aşamasında olabilir.<br>";
+resultText+="⚠️ Haciz aşamasında olabilir.<br>";
 }
 
-resultText += "<br><strong>📌 En Ucuz Kurtulma Yolları:</strong><br><br>";
-resultText += "1️⃣ Alacaklı ile faiz indirimi pazarlığı yap.<br>";
-resultText += "2️⃣ Taksitlendirme talep et.<br>";
-resultText += "3️⃣ Süre içindeysen itiraz et.<br>";
-resultText += "4️⃣ Borç sana ait değilse menfi tespit davası değerlendir.<br><br>";
+resultText+="<br><strong>📌 En Ucuz Çözüm Yolları:</strong><br>";
+resultText+="1️⃣ Alacaklı ile faiz indirimi pazarlığı.<br>";
+resultText+="2️⃣ Taksit talebi.<br>";
+resultText+="3️⃣ Süre içindeysen itiraz.<br>";
+resultText+="4️⃣ Borç sana ait değilse menfi tespit.<br><br>";
 }
 
 /* ==============================
-   👷 İŞÇİ ALACAKLARI ANALİZİ
+   👷 İŞÇİ ALACAKLARI
 ============================== */
 
-if(fullText.includes("kıdem") || fullText.includes("ihbar") || fullText.includes("fazla mesai")){
+if(fullText.includes("kıdem") ||
+fullText.includes("ihbar") ||
+fullText.includes("fazla mesai")){
 
-resultText += "<span style='color:blue;font-size:18px;font-weight:bold'>👷 İŞÇİ ALACAĞI TESPİT EDİLDİ</span><br><br>";
+resultText+="<div class='info'>👷 İŞÇİ ALACAĞI TESPİT EDİLDİ</div><br>";
 
-resultText += "📌 Kontrol edilmesi gerekenler:<br>";
-resultText += "- Kıdem tazminatı doğru hesaplanmış mı?<br>";
-resultText += "- İhbar süresi doğru mu?<br>";
-resultText += "- Fazla mesai hesaplaması var mı?<br>";
-resultText += "- SGK primleri tam yatırılmış mı?<br><br>";
+resultText+="Kontrol edilmesi gerekenler:<br>";
+resultText+="- Kıdem doğru hesaplandı mı?<br>";
+resultText+="- İhbar süresi doğru mu?<br>";
+resultText+="- Fazla mesai var mı?<br>";
+resultText+="- SGK primleri tam mı?<br><br>";
 }
 
 /* ==============================
    📖 ANAYASA ANALİZİ
 ============================== */
 
-function anayasaAcikla(madde, aciklama){
-resultText += "<div style='background:#eef;padding:10px;border-radius:8px;margin-bottom:10px'>";
-resultText += "<strong>📖 Anayasa Madde " + madde + ":</strong><br>";
-resultText += aciklama;
-resultText += "</div>";
+function anayasaAcikla(madde,aciklama){
+resultText+="<div style='background:#eef;padding:10px;border-radius:8px;margin-bottom:10px'>";
+resultText+="<strong>📖 Anayasa Madde "+madde+":</strong><br>"+aciklama;
+resultText+="</div>";
 }
 
 if(fullText.includes("36")){
-anayasaAcikla("36",
-"Hak arama hürriyeti. Mahkemeye başvurma ve savunma hakkı anayasal güvence altındadır.");
+anayasaAcikla("36","Hak arama hürriyeti anayasal güvencededir.");
 }
 
 if(fullText.includes("35")){
-anayasaAcikla("35",
-"Mülkiyet hakkı korunur. İcra işlemleri bu madde kapsamında değerlendirilir.");
+anayasaAcikla("35","Mülkiyet hakkı korunur. İcra işlemleri bu maddeyle bağlantılıdır.");
 }
 
 if(fullText.includes("49")){
-anayasaAcikla("49",
-"Çalışma hakkı ve işçinin korunması devlet güvencesindedir.");
+anayasaAcikla("49","Çalışma hakkı anayasal koruma altındadır.");
 }
 
 if(fullText.includes("55")){
-anayasaAcikla("55",
-"Ücret emeğin karşılığıdır. İşçi ücret alacakları anayasal koruma altındadır.");
+anayasaAcikla("55","Ücret emeğin karşılığıdır ve korunur.");
 }
 
 if(fullText.includes("60")){
-anayasaAcikla("60",
-"Sosyal güvenlik hakkı anayasal haktır.");
+anayasaAcikla("60","Sosyal güvenlik hakkı anayasal güvencededir.");
 }
 
 /* ==============================
-   ⚖️ SONUÇ YOKSA
+   SONUÇ YOKSA
 ============================== */
 
-if(resultText === ""){
-resultText = "Belirgin risk tespit edilmedi. Detaylı hukuki inceleme gerekebilir.";
+if(resultText===""){
+resultText="Belirgin risk tespit edilmedi.";
 }
 
-document.getElementById("result").innerHTML = resultText;
+document.getElementById("result").innerHTML=resultText;
 
 };
 
 reader.readAsArrayBuffer(file);
 }
+
 </script>
+
+</body>
+</html>

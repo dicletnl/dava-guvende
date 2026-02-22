@@ -2,37 +2,43 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Dava Güvende AI - V14 (Hukuki Doktrin)</title>
+    <title>Dava Güvende AI - V15 AI Counsel</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
-        :root { --legal-green: #1b5e20; --legal-red: #b71c1c; --legal-dark: #1a1a1a; --gold: #c5a059; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Times New Roman', Times, serif; background: #f4f4f4; overflow: hidden; }
+        :root { --ai-green: #00ff9d; --ai-red: #ff4d4d; --gold: #d4af37; --bg: #0a0b10; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; }
         
         .split-container { display: flex; height: 100vh; }
-        .side { flex: 1; padding: 40px; overflow-y: auto; position: relative; border-top: 8px solid; }
+        .side { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; position: relative; transition: all 0.5s ease; }
         
-        /* Davacı Paneli */
-        .davaci-side { background: #ffffff; border-color: var(--legal-green); border-right: 1px solid #ccc; }
-        .davaci-title { color: var(--legal-green); border-bottom: 2px solid var(--legal-green); display: inline-block; }
+        /* AI Panel Tasarımları */
+        .davaci-side { border-right: 1px solid rgba(0, 255, 157, 0.2); background: linear-gradient(135deg, #0a0b10 0%, #0d2b1f 100%); }
+        .davali-side { background: linear-gradient(135deg, #0a0b10 0%, #2b0d0d 100%); }
 
-        /* Davalı Paneli */
-        .davali-side { background: #ffffff; border-color: var(--legal-red); }
-        .davali-title { color: var(--legal-red); border-bottom: 2px solid var(--legal-red); display: inline-block; }
-
-        .upload-section { background: #fafafa; border: 1px solid #ddd; padding: 20px; border-radius: 4px; margin-top: 20px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
-        .btn { width: 100%; padding: 15px; border: none; cursor: pointer; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; margin-top: 15px; transition: 0.2s; }
-        .btn-davaci { background: var(--legal-green); color: white; }
-        .btn-davali { background: var(--legal-red); color: white; }
-        .btn:hover { filter: brightness(1.2); }
-
-        /* Hukuki Analiz Kartları */
-        .legal-card { background: white; border: 1px solid #d1d1d1; padding: 25px; margin-top: 25px; line-height: 1.6; }
-        .legal-card h4 { margin-top: 0; color: var(--legal-dark); text-transform: uppercase; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .ai-header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
+        .ai-avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; }
         
-        .term { font-weight: bold; color: #333; font-style: italic; }
-        textarea { width: 100%; height: 250px; margin-top: 15px; padding: 15px; border: 1px solid #999; font-family: 'Courier New', Courier, monospace; font-size: 13px; background: #f9f9f9; }
+        .davaci-side .ai-avatar { border-color: var(--ai-green); color: var(--ai-green); box-shadow: 0 0 15px var(--ai-green); }
+        .davali-side .ai-avatar { border-color: var(--ai-red); color: var(--ai-red); box-shadow: 0 0 15px var(--ai-red); }
+
+        .title { font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
         
-        .badge-ai { background: var(--gold); color: #000; padding: 3px 10px; font-size: 11px; font-weight: bold; margin-bottom: 10px; display: inline-block; }
+        /* İnteraktif Alanlar */
+        .upload-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px); }
+        .btn-ai { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; margin-top: 15px; }
+        
+        .btn-davaci { background: var(--ai-green); color: black; }
+        .btn-davali { background: var(--ai-red); color: white; }
+        .btn-ai:hover { transform: scale(1.02); filter: brightness(1.1); }
+
+        /* AI Analiz Çıktısı */
+        .ai-report { margin-top: 25px; animation: fadeIn 0.8s ease; }
+        .intelligence-box { background: rgba(0,0,0,0.4); border-left: 4px solid; padding: 20px; margin-bottom: 20px; font-family: 'Consolas', monospace; font-size: 0.9rem; line-height: 1.5; }
+        
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        textarea { width: 100%; height: 200px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: #00ff9d; padding: 15px; border-radius: 8px; margin-top: 15px; }
+        .davali-side textarea { color: #ff4d4d; }
     </style>
 </head>
 <body>
@@ -40,27 +46,39 @@
 <div class="split-container">
     
     <div class="side davaci-side">
-        <h2 class="davaci-title">ADLİ MAKAMA ARZ: DAVACI MÜEYYİDESİ</h2>
-        <p><span class="term">Müddei, iddiasını ispatla mükelleftir.</span> Alacak kalemlerinin tahsili ve hak ihlalinin izalesi için döküman yükleyiniz.</p>
-        
-        <div class="upload-section">
-            <input type="file" id="pdfDavaci" accept=".pdf">
-            <button class="btn btn-davaci" onclick="analyze('davaci')">Hukuki Analiz ve İddianame Taslağı</button>
+        <div class="ai-header">
+            <div class="ai-avatar">Δ</div>
+            <div>
+                <div class="title" style="color: var(--ai-green);">Attack Engine v15</div>
+                <small style="color: #aaa;">Hukuki Taarruz ve Hak İktisabı Analizörü</small>
+            </div>
         </div>
-        
-        <div id="res-davaci"></div>
+
+        <div class="upload-card">
+            <p>Sistem, <span style="color:var(--ai-green)">İspat Külfeti</span> ve <span style="color:var(--ai-green)">Maddi Gerçeklik</span> ilkeleriyle dökümanı tarayacaktır.</p>
+            <input type="file" id="pdfDavaci" accept=".pdf">
+            <button class="btn-ai btn-davaci" onclick="aiProcess('davaci')">Dökümanı İşle & Saldırı Planı Kur</button>
+        </div>
+
+        <div id="report-davaci" class="ai-report"></div>
     </div>
 
     <div class="side davali-side">
-        <h2 class="davali-title">ADLİ MAKAMA ARZ: DAVALI DEF'İ HATTI</h2>
-        <p><span class="term">Usul, esastan önce gelir.</span> Haksız taleplerin reddi ve hukuki himaye için tebligat/belge yükleyiniz.</p>
-        
-        <div class="upload-section">
-            <input type="file" id="pdfDavali" accept=".pdf">
-            <button class="btn btn-davali" onclick="analyze('davali')">Hukuki Savunma ve Cevap Layihası</button>
+        <div class="ai-header">
+            <div class="ai-avatar">Ω</div>
+            <div>
+                <div class="title" style="color: var(--ai-red);">Defense Core v15</div>
+                <small style="color: #aaa;">Hukuki Def'i ve Usulü İtiraz Mekanizması</small>
+            </div>
         </div>
 
-        <div id="res-davali"></div>
+        <div class="upload-card">
+            <p>Sistem, <span style="color:var(--ai-red)">Zamanaşımı</span> ve <span style="color:var(--ai-red)">Hukuki Yarar</span> yokluğunu denetleyecektir.</p>
+            <input type="file" id="pdfDavali" accept=".pdf">
+            <button class="btn-ai btn-davali" onclick="aiProcess('davali')">Dökümanı İşle & Savunma Kalkanı Kur</button>
+        </div>
+
+        <div id="report-davali" class="ai-report"></div>
     </div>
 
 </div>
@@ -68,9 +86,12 @@
 <script>
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-    async function analyze(mode) {
+    async function aiProcess(mode) {
         const file = document.getElementById('pdf' + mode.charAt(0).toUpperCase() + mode.slice(1)).files[0];
         if (!file) return;
+
+        const targetReport = document.getElementById('report-' + mode);
+        targetReport.innerHTML = `<div class="intelligence-box" style="border-color: #aaa;">> SİSTEM TARANIYOR... METİN VERİSİ AYRIŞTIRILIYOR...</div>`;
 
         const reader = new FileReader();
         reader.onload = async function() {
@@ -82,45 +103,11 @@
                 const content = await page.getTextContent();
                 text += content.items.map(s => s.str).join(" ").toLowerCase();
             }
-            renderLegalAI(mode, text);
+            generateAIReport(mode, text);
         };
         reader.readAsArrayBuffer(file);
     }
 
-    function renderLegalAI(mode, text) {
-        const target = document.getElementById('res-' + mode);
-        
-        if(mode === 'davaci') {
-            target.innerHTML = `
-            <div class="legal-card">
-                <div class="badge-ai">HUKUKİ STRATEJİ: AKTİF TAARRUZ</div>
-                <h4>İddia ve Alacak Yönetimi</h4>
-                <p>Analiz neticesinde; <span class="term">feshin geçersizliği</span> ve <span class="term">alacak kalemlerinin muacceliyet kesbetmesi</span> üzerine odaklanılmıştır. 7036 Sayılı Kanun uyarınca arabuluculuk süreci tamamlanmış varsayılarak, <span class="term">belirsiz alacak davası</span> ikame edilecektir.</p>
-                <ul>
-                    <li>Maddi vakıaların <span class="term">hayatın olağan akışına</span> uygunluğu vurgulanacaktır.</li>
-                    <li>İşveren uhdesindeki kayıtların celbi ile <span class="term">ispat külfeti</span> karşı tarafa yüklenecektir.</li>
-                </ul>
-                <textarea>
-SAYIN HAKİMLİĞE;
-Davacı müvekkilin emeğinin karşılığı olan hak edişlerinin ödenmemesi, Türk Borçlar Kanunu ve İş Kanunu amir hükümleri uyarınca hukuka aykırıdır. Fazlaya dair haklarımız mahfuz kalmak kaydıyla, alacağın temerrüt faiziyle tahsilini talep ederiz.</textarea>
-            </div>`;
-        } else {
-            target.innerHTML = `
-            <div class="legal-card">
-                <div class="badge-ai">HUKUKİ STRATEJİ: PASİF DEF'İ</div>
-                <h4>Usulü İtiraz ve Esas Hakkında Savunma</h4>
-                <p>İddiaların <span class="term">mesnetsiz</span> olduğu, davanın <span class="term">hukuki yarar yokluğu</span> nedeniyle reddi gerektiği mütalaa edilmiştir. <span class="term">Zamanaşımı def'i</span> ilk itiraz olarak sunulacaktır.</p>
-                <ul>
-                    <li>Davacının iddiaları <span class="term">soyut beyanlardan</span> ibaret olup, delil hiyerarşisine aykırıdır.</li>
-                    <li>İbra hükümleri ve ödeme dekontları ile <span class="term">borcun ifa edildiği</span> kanıtlanacaktır.</li>
-                </ul>
-                <textarea>
-SAYIN HAKİMLİĞE;
-Haksız ve hukuki dayanaktan yoksun açılan davanın, usulden ve esastan reddi gerekmektedir. Davacı tarafın iddiaları hayatın olağan akışına aykırı olup, kötüniyet tazminatına hükmedilmesini arz ve talep ederiz.</textarea>
-            </div>`;
-        }
-    }
-</script>
-
-</body>
-</html>
+    function generateAIReport(mode, text) {
+        const target = document.getElementById('report-' + mode);
+        const accent = mode === 'davaci' ? 'var(--ai-green)' : '

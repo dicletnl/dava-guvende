@@ -1,173 +1,151 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-<meta charset="UTF-8">
-<title>Dava Güvende AI - V4</title>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-
-<style>
-body{font-family:Arial;background:#f4f6fb;padding:20px;}
-button{padding:10px 15px;margin-top:10px;}
-#result{margin-top:20px;padding:20px;background:white;border-radius:10px;}
-.high{color:red;font-weight:bold;font-size:20px;}
-.medium{color:orange;font-weight:bold;font-size:18px;}
-.low{color:green;font-weight:bold;font-size:18px;}
-.box{background:#eef;padding:15px;border-radius:8px;margin-bottom:15px;}
-.section{margin-top:25px;font-weight:bold;font-size:18px;}
-.anayasa{background:#f9f9f9;padding:10px;border-left:4px solid #333;margin-bottom:10px;}
-.score{font-size:22px;font-weight:bold;margin-top:10px;}
-</style>
+    <meta charset="UTF-8">
+    <title>Dava Güvende AI - V7 Savunma Zırhı</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <style>
+        :root { --p: #1a2a6c; --danger: #b21f1f; --gold: #fdbb2d; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); padding: 20px; }
+        .container { max-width: 1100px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 3px solid var(--p); padding-bottom: 15px; margin-bottom: 25px; }
+        .upload-zone { border: 3px dotted #cbd5e0; padding: 40px; text-align: center; border-radius: 15px; transition: 0.3s; background: #fff; }
+        .upload-zone:hover { border-color: var(--p); background: #f0f4f8; }
+        button { background: var(--p); color: white; border: none; padding: 15px 30px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px; }
+        .card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .defense-card { border-top: 5px solid var(--danger); background: #fff5f5; }
+        .petition-card { border-top: 5px solid var(--p); background: #f0f7ff; grid-column: span 2; }
+        
+        .strategy-list { list-style: none; padding: 0; }
+        .strategy-list li { margin-bottom: 12px; padding-left: 25px; position: relative; }
+        .strategy-list li::before { content: '🛡️'; position: absolute; left: 0; }
+        
+        textarea { width: 100%; height: 250px; font-family: 'Courier New', monospace; padding: 15px; border-radius: 5px; border: 1px solid #ccc; margin-top: 10px; }
+        .badge { background: var(--gold); color: #000; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+    </style>
 </head>
-
 <body>
 
-<h2>⚖️ Dava Güvende AI – Gelişmiş Hukuk Motoru</h2>
+<div class="container">
+    <div class="header">
+        <h1>⚖️ Dava Güvende AI - V7</h1>
+        <p>Yüklenen Dosyaya Göre Savunma Stratejisi ve Karşı Dilekçe Üretici</p>
+    </div>
 
-<input type="file" id="pdfFile" accept=".pdf">
-<br>
-<button onclick="analyzePDF()">Analiz Et</button>
+    <div class="upload-zone">
+        <input type="file" id="pdfFile" accept=".pdf" style="display: none;">
+        <label for="pdfFile" style="cursor: pointer; display: block;">
+            <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" width="50"><br>
+            <strong>PDF Dosyasını Buraya Bırakın veya Seçin</strong>
+        </label>
+        <br>
+        <button onclick="analyzePDF()">Analizi Başlat ve Dilekçe Yaz</button>
+    </div>
 
-<div id="result"></div>
+    <div id="result"></div>
+</div>
 
 <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc =
-'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    async function analyzePDF() {
+        const file = document.getElementById("pdfFile").files[0];
+        if(!file) return alert("Lütfen analiz edilecek dosyayı yükleyin.");
+        
+        document.getElementById("result").innerHTML = "<h3>🔍 Dosya derinlemesine taranıyor...</h3>";
 
-async function analyzePDF(){
+        const reader = new FileReader();
+        reader.onload = async function() {
+            const typedarray = new Uint8Array(this.result);
+            const pdf = await pdfjsLib.getDocument(typedarray).promise;
+            let text = "";
+            for(let i=1; i<=pdf.numPages; i++){
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                text += content.items.map(s => s.str.toLowerCase()).join(" ");
+            }
+            generateStrategy(text);
+        };
+        reader.readAsArrayBuffer(file);
+    }
 
-const file = document.getElementById("pdfFile").files[0];
-if(!file){ alert("PDF seçiniz."); return; }
+    function generateStrategy(text) {
+        let isIs = text.includes("kıdem") || text.includes("ihbar") || text.includes("işçi") || text.includes("alacak");
+        let isIcra = text.includes("icra") || text.includes("borç") || text.includes("ödeme emri");
+        let isCeza = text.includes("savcılık") || text.includes("şikayet") || text.includes("suç");
 
-const reader = new FileReader();
+        let html = '<div class="result-grid">';
 
-reader.onload = async function(){
+        if(isIs) {
+            html += `
+            <div class="card">
+                <span class="badge">ANALİZ: İŞ HUKUKU</span>
+                <h3>📉 Davacı Tarafın Zayıf Noktaları</h3>
+                <ul class="strategy-list">
+                    <li><strong>Zamanaşımı:</strong> 5 yıllık süreyi kontrol edin, çoğu işçi bunu kaçırır.</li>
+                    <li><strong>Belirsiz Alacak:</strong> Alacak kalemleri net değilse "Hukuki Yarar Yokluğu"ndan reddini isteyin.</li>
+                    <li><strong>Arabuluculuk:</strong> Eğer arabuluculuğa gidilmeden dava açılmışsa doğrudan usulden reddettirin.</li>
+                </ul>
+            </div>
+            <div class="card defense-card">
+                <h3>🛡️ Sıyrılma ve Kaçınma Planı</h3>
+                <ul class="strategy-list">
+                    <li>"İşçi kendi istifa etti" savunmasını güçlendirin (Varsa WhatsApp kayıtları delildir).</li>
+                    <li>Fazla mesai iddiasına karşı "imzalı bordro" sunarak iddianın aksini kanıtlayın.</li>
+                    <li>Kötüniyet tazminatı talebi varsa, dürüstlük kuralına aykırılık vurgusu yapın.</li>
+                </ul>
+            </div>
+            <div class="card petition-card">
+                <h3>📝 Otomatik Üretilen Cevap Dilekçesi</h3>
+                <p>Aşağıdaki taslak, yüklediğiniz metne istinaden karşı savunma olarak hazırlanmıştır:</p>
+                <textarea>
+... NÖBETÇİ İŞ MAHKEMESİNE
 
-const typedarray = new Uint8Array(this.result);
-const pdf = await pdfjsLib.getDocument(typedarray).promise;
+DOSYA NO: [Esas No]
 
-let fullText="";
+CEVAP VEREN DAVALI: [Adınız/Unvanınız]
+VEKİLİ: [Avukat Adı]
 
-for(let i=1;i<=pdf.numPages;i++){
-const page = await pdf.getPage(i);
-const content = await page.getTextContent();
-content.items.forEach(item=>{
-fullText+=item.str.toLowerCase()+" ";
-});
-}
+KONU: Davacının haksız ve hukuki dayanaktan yoksun davasına karşı cevaplarımızın sunulmasıdır.
 
-let result="";
-let riskScore=0;
-let anayasaBag=[];
+AÇIKLAMALAR:
+1- Davacı tarafın müvekkil şirketteki iş akdi, iddia edildiği gibi haksız değil, davacının kendi isteği ve rızasıyla (İstifa) sona ermiştir.
+2- Davacının talep ettiği fazla mesai ve genel tatil ücreti alacakları asılsızdır. Ekte sunduğumuz imzalı bordrolar ve banka kayıtları borcun olmadığını ispatlamaktadır.
+3- Ayrıca huzurdaki davada zamanaşımı söz konusudur. Süresi geçtikten sonra talep edilen alacakların reddi gerekir.
 
-/* ================= İCRA ANALİZ ================= */
+SONUÇ VE İSTEM: Haksız davanın reddine, yargılama giderlerinin karşı tarafa yükletilmesine karar verilmesini arz ve talep ederiz.
 
-if(fullText.includes("icra")){
+İMZA</textarea>
+            </div>`;
+        }
 
-result+="<div class='high'>🔴 İCRA DOSYASI TESPİT EDİLDİ</div>";
+        if(isIcra) {
+            html += `
+            <div class="card">
+                <span class="badge">ANALİZ: İCRA TAKİBİ</span>
+                <h3>🛑 Takibi Durdurma Yolları</h3>
+                <ul class="strategy-list">
+                    <li>7 gün içinde "Borca İtiraz" dilekçesi vererek takibi durdurun.</li>
+                    <li>Yetki itirazı yaparak dosyayı başka şehre gönderip zaman kazanın.</li>
+                </ul>
+            </div>
+            <div class="card defense-card">
+                <h3>🛡️ Mal Varlığı Koruma</h3>
+                <ul class="strategy-list">
+                    <li>Haczedilemezlik şikayeti: Ev eşyası veya emekli maaşı haczedildiyse hemen dava açın.</li>
+                    <li>Menfi Tespit Davası açarak icrayı durdurma kararı (tedbir) talep edin.</li>
+                </ul>
+            </div>`;
+        }
 
-riskScore=50;
-
-if(fullText.includes("haciz")) riskScore+=15;
-if(fullText.includes("7 gün")) riskScore+=10;
-if(fullText.includes("faiz")) riskScore+=5;
-if(fullText.includes("tebligat")) riskScore+=10;
-
-result+="<div class='section'>📉 Maliyet Öncelikli Kurtulma Stratejisi</div>";
-result+="<div class='box'>";
-result+="1️⃣ Önce faiz indirimi pazarlığı (en düşük maliyet)<br>";
-result+="2️⃣ Taksitlendirme talebi<br>";
-result+="3️⃣ Süre içindeyse borca itiraz<br>";
-result+="4️⃣ Usulsüz tebligat incelemesi<br>";
-result+="5️⃣ Zamanaşımı ihtimali araştırması<br>";
-result+="</div>";
-
-result+="<div class='score'>Risk Skoru: "+riskScore+"/100</div>";
-
-anayasaBag=["2","5","10","35","36","90"];
-}
-
-/* ================= İŞÇİ ANALİZ ================= */
-
-if(fullText.includes("kıdem") ||
-fullText.includes("ihbar") ||
-fullText.includes("fazla mesai") ||
-fullText.includes("ücret")){
-
-result+="<div class='medium'>🟠 İŞÇİ ALACAĞI DOSYASI</div>";
-
-riskScore=40;
-
-if(fullText.includes("fazla mesai")) riskScore+=10;
-if(fullText.includes("kıdem")) riskScore+=10;
-
-result+="<div class='section'>📌 Delil Gücü Analizi</div>";
-result+="<div class='box'>";
-result+="• Hesap cetveli eklenmeli<br>";
-result+="• SGK hizmet dökümü karşılaştırılmalı<br>";
-result+="• Banka dekontları incelenmeli<br>";
-result+="• Zamanaşımı süresi (5 yıl) kontrol edilmeli<br>";
-result+="• Faiz başlangıç tarihi doğru belirlenmeli<br>";
-result+="</div>";
-
-result+="<div class='score'>Risk Skoru: "+riskScore+"/100</div>";
-
-anayasaBag=["2","10","36","48","49","50","55","60","90"];
-}
-
-/* ================= ANAYASA MOTORU ================= */
-
-result+="<div class='section'>📖 Anayasal Dayanaklar</div>";
-
-function anayasaYaz(madde,detay){
-result+="<div class='anayasa'><strong>Madde "+madde+":</strong><br>"+detay+"</div>";
-}
-
-anayasaBag.forEach(function(m){
-
-if(m=="2")
-anayasaYaz("2","Türkiye Cumhuriyeti sosyal bir hukuk devletidir. Devlet tüm işlemlerinde ölçülülük ve hukuka bağlılık ilkesine uymak zorundadır.");
-
-if(m=="5")
-anayasaYaz("5","Devlet, kişinin temel hak ve özgürlüklerini korumak ve geliştirmekle yükümlüdür.");
-
-if(m=="10")
-anayasaYaz("10","Kanun önünde eşitlik ilkesi gereği ayrımcılık yapılamaz.");
-
-if(m=="35")
-anayasaYaz("35","Mülkiyet hakkı korunur. İcra işlemleri ölçülü ve hukuka uygun olmalıdır.");
-
-if(m=="36")
-anayasaYaz("36","Hak arama özgürlüğü ve adil yargılanma hakkı güvence altındadır.");
-
-if(m=="48")
-anayasaYaz("48","Çalışma ve sözleşme özgürlüğü anayasal koruma altındadır.");
-
-if(m=="49")
-anayasaYaz("49","Çalışma hakkı devlet güvencesindedir.");
-
-if(m=="50")
-anayasaYaz("50","Çalışma şartları insan onuruna uygun olmalıdır.");
-
-if(m=="55")
-anayasaYaz("55","Ücret emeğin karşılığıdır ve devlet tarafından korunur.");
-
-if(m=="60")
-anayasaYaz("60","Herkes sosyal güvenlik hakkına sahiptir.");
-
-if(m=="90")
-anayasaYaz("90","Uluslararası insan hakları sözleşmeleri iç hukuka üstünlük sağlar.");
-});
-
-document.getElementById("result").innerHTML=result;
-
-};
-
-reader.readAsArrayBuffer(file);
-}
-
+        html += '</div>';
+        if(!isIs && !isIcra && !isCeza) {
+            html = "<div class='card'>🔍 Yüklenen metinde net bir hukuki kategori (İş, İcra, Ceza) bulunamadı. Lütfen metnin okunabilir olduğundan emin olun.</div>";
+        }
+        document.getElementById("result").innerHTML = html;
+    }
 </script>
-
 </body>
 </html>

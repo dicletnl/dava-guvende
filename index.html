@@ -2,112 +2,37 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Dava Güvende AI - V15 AI Counsel</title>
+    <title>Dava Güvende AI - V16</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <style>
-        :root { --ai-green: #00ff9d; --ai-red: #ff4d4d; --gold: #d4af37; --bg: #0a0b10; }
-        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Inter', 'Segoe UI', sans-serif; background: var(--bg); color: white; overflow: hidden; }
+        :root { --accent-g: #00d2d3; --accent-r: #ff6b6b; --dark: #121212; --panel: #1e272e; }
+        body, html { margin: 0; padding: 0; height: 100%; font-family: 'Segoe UI', Arial, sans-serif; background: var(--dark); color: #ecf0f1; overflow: hidden; }
         
-        .split-container { display: flex; height: 100vh; }
-        .side { flex: 1; padding: 40px; overflow-y: auto; display: flex; flex-direction: column; position: relative; transition: all 0.5s ease; }
+        .main-frame { display: flex; height: 100vh; width: 100vw; }
+        .side { flex: 1; display: flex; flex-direction: column; padding: 30px; position: relative; border-top: 5px solid; }
         
-        /* AI Panel Tasarımları */
-        .davaci-side { border-right: 1px solid rgba(0, 255, 157, 0.2); background: linear-gradient(135deg, #0a0b10 0%, #0d2b1f 100%); }
-        .davali-side { background: linear-gradient(135deg, #0a0b10 0%, #2b0d0d 100%); }
+        /* Panel Kimlikleri */
+        .plaintiff { border-color: var(--accent-g); background: linear-gradient(180deg, #1e272e 0%, #0a3d34 100%); border-right: 1px solid #333; }
+        .defendant { border-color: var(--accent-r); background: linear-gradient(180deg, #1e272e 0%, #3d0a0a 100%); }
 
-        .ai-header { display: flex; align-items: center; gap: 15px; margin-bottom: 30px; }
-        .ai-avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 20px; }
-        
-        .davaci-side .ai-avatar { border-color: var(--ai-green); color: var(--ai-green); box-shadow: 0 0 15px var(--ai-green); }
-        .davali-side .ai-avatar { border-color: var(--ai-red); color: var(--ai-red); box-shadow: 0 0 15px var(--ai-red); }
+        .ai-status { font-family: 'Courier New', monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 5px; border-left: 3px solid; margin-bottom: 20px; font-size: 0.85rem; }
+        .plaintiff .ai-status { border-color: var(--accent-g); color: var(--accent-g); }
+        .defendant .ai-status { border-color: var(--accent-r); color: var(--accent-r); }
 
-        .title { font-size: 1.5rem; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; }
+        h2 { text-transform: uppercase; letter-spacing: 2px; margin-bottom: 5px; }
+        .upload-zone { background: rgba(255,255,255,0.05); padding: 20px; border-radius: 10px; border: 1px dashed #555; text-align: center; }
         
-        /* İnteraktif Alanlar */
-        .upload-card { background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255,255,255,0.1); padding: 25px; border-radius: 15px; backdrop-filter: blur(10px); }
-        .btn-ai { width: 100%; padding: 15px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; text-transform: uppercase; transition: 0.3s; margin-top: 15px; }
-        
-        .btn-davaci { background: var(--ai-green); color: black; }
-        .btn-davali { background: var(--ai-red); color: white; }
-        .btn-ai:hover { transform: scale(1.02); filter: brightness(1.1); }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; margin-top: 10px; text-transform: uppercase; transition: 0.3s; }
+        .btn-g { background: var(--accent-g); color: #000; }
+        .btn-r { background: var(--accent-r); color: #fff; }
+        .btn:hover { opacity: 0.8; transform: scale(1.01); }
 
-        /* AI Analiz Çıktısı */
-        .ai-report { margin-top: 25px; animation: fadeIn 0.8s ease; }
-        .intelligence-box { background: rgba(0,0,0,0.4); border-left: 4px solid; padding: 20px; margin-bottom: 20px; font-family: 'Consolas', monospace; font-size: 0.9rem; line-height: 1.5; }
-        
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        textarea { width: 100%; height: 200px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.2); color: #00ff9d; padding: 15px; border-radius: 8px; margin-top: 15px; }
-        .davali-side textarea { color: #ff4d4d; }
+        textarea { width: 100%; flex-grow: 1; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid #444; padding: 15px; border-radius: 5px; font-family: 'Times New Roman', serif; font-size: 1rem; line-height: 1.5; margin-top: 15px; resize: none; }
     </style>
 </head>
 <body>
 
-<div class="split-container">
-    
-    <div class="side davaci-side">
-        <div class="ai-header">
-            <div class="ai-avatar">Δ</div>
-            <div>
-                <div class="title" style="color: var(--ai-green);">Attack Engine v15</div>
-                <small style="color: #aaa;">Hukuki Taarruz ve Hak İktisabı Analizörü</small>
-            </div>
-        </div>
-
-        <div class="upload-card">
-            <p>Sistem, <span style="color:var(--ai-green)">İspat Külfeti</span> ve <span style="color:var(--ai-green)">Maddi Gerçeklik</span> ilkeleriyle dökümanı tarayacaktır.</p>
-            <input type="file" id="pdfDavaci" accept=".pdf">
-            <button class="btn-ai btn-davaci" onclick="aiProcess('davaci')">Dökümanı İşle & Saldırı Planı Kur</button>
-        </div>
-
-        <div id="report-davaci" class="ai-report"></div>
-    </div>
-
-    <div class="side davali-side">
-        <div class="ai-header">
-            <div class="ai-avatar">Ω</div>
-            <div>
-                <div class="title" style="color: var(--ai-red);">Defense Core v15</div>
-                <small style="color: #aaa;">Hukuki Def'i ve Usulü İtiraz Mekanizması</small>
-            </div>
-        </div>
-
-        <div class="upload-card">
-            <p>Sistem, <span style="color:var(--ai-red)">Zamanaşımı</span> ve <span style="color:var(--ai-red)">Hukuki Yarar</span> yokluğunu denetleyecektir.</p>
-            <input type="file" id="pdfDavali" accept=".pdf">
-            <button class="btn-ai btn-davali" onclick="aiProcess('davali')">Dökümanı İşle & Savunma Kalkanı Kur</button>
-        </div>
-
-        <div id="report-davali" class="ai-report"></div>
-    </div>
-
-</div>
-
-<script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-    async function aiProcess(mode) {
-        const file = document.getElementById('pdf' + mode.charAt(0).toUpperCase() + mode.slice(1)).files[0];
-        if (!file) return;
-
-        const targetReport = document.getElementById('report-' + mode);
-        targetReport.innerHTML = `<div class="intelligence-box" style="border-color: #aaa;">> SİSTEM TARANIYOR... METİN VERİSİ AYRIŞTIRILIYOR...</div>`;
-
-        const reader = new FileReader();
-        reader.onload = async function() {
-            const typedarray = new Uint8Array(this.result);
-            const pdf = await pdfjsLib.getDocument(typedarray).promise;
-            let text = "";
-            for(let i=1; i<=pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                text += content.items.map(s => s.str).join(" ").toLowerCase();
-            }
-            generateAIReport(mode, text);
-        };
-        reader.readAsArrayBuffer(file);
-    }
-
-    function generateAIReport(mode, text) {
-        const target = document.getElementById('report-' + mode);
-        const accent = mode === 'davaci' ? 'var(--ai-green)' : '
+<div class="main-frame">
+    <div class="side plaintiff">
+        <h2>⚔️ SALDIRI BİRİMİ</h2>
+        <small>Hukuki Müeyyide ve Hak Arama Motoru</small>

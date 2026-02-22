@@ -2,23 +2,24 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Dava Analiz Sistemi</title>
+<title>Akıllı Dava Analiz Sistemi</title>
 
-<!-- PDF.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
 
 <style>
-body{font-family:Arial;padding:20px;background:#f4f6f9;}
+body{font-family:Arial;background:#f2f4f8;padding:20px;}
 button{padding:10px 15px;margin-top:10px;}
-#result{margin-top:20px;padding:15px;background:white;border-radius:8px;}
-.warning{color:red;font-weight:bold;}
-.info{color:blue;font-weight:bold;}
+#result{margin-top:20px;padding:15px;background:white;border-radius:10px;}
+.high{color:red;font-weight:bold;font-size:18px;}
+.medium{color:orange;font-weight:bold;font-size:18px;}
+.low{color:green;font-weight:bold;font-size:18px;}
+.box{background:#eef;padding:10px;border-radius:8px;margin-bottom:10px;}
 </style>
 </head>
 
 <body>
 
-<h2>📂 Dava Analiz Sistemi</h2>
+<h2>⚖️ Akıllı Dava Analiz Sistemi</h2>
 
 <input type="file" id="pdfFile" accept=".pdf">
 <br>
@@ -35,7 +36,7 @@ async function analyzePDF(){
 
 const file = document.getElementById("pdfFile").files[0];
 if(!file){
-alert("Lütfen PDF seçin.");
+alert("PDF seçiniz.");
 return;
 }
 
@@ -46,97 +47,125 @@ reader.onload = async function(){
 const typedarray = new Uint8Array(this.result);
 const pdf = await pdfjsLib.getDocument(typedarray).promise;
 
-let fullText = "";
+let fullText="";
 
 for(let i=1;i<=pdf.numPages;i++){
 const page = await pdf.getPage(i);
 const content = await page.getTextContent();
 content.items.forEach(item=>{
-fullText += item.str.toLowerCase()+" ";
+fullText+=item.str.toLowerCase()+" ";
 });
 }
 
-let resultText="";
+let result="";
 
-/* ==============================
-   🔴 İCRA ANALİZİ
-============================== */
+/* ===============================
+   🔴 İCRA STRATEJİ MOTORU
+================================ */
 
 if(fullText.includes("icra")){
 
-resultText+="<div class='warning'>🔴 YÜKSEK RİSK: İCRA DOSYASI TESPİT EDİLDİ</div><br>";
+result+="<div class='high'>🔴 YÜKSEK RİSK: İCRA DOSYASI</div><br>";
 
-if(fullText.includes("7 gün")){
-resultText+="⚠️ 7 günlük itiraz süresi olabilir.<br>";
-}
+let riskScore=70;
 
 if(fullText.includes("haciz")){
-resultText+="⚠️ Haciz aşamasında olabilir.<br>";
+riskScore+=20;
+result+="⚠️ Haciz aşamasına geçilmiş olabilir.<br>";
 }
 
-resultText+="<br><strong>📌 En Ucuz Çözüm Yolları:</strong><br>";
-resultText+="1️⃣ Alacaklı ile faiz indirimi pazarlığı.<br>";
-resultText+="2️⃣ Taksit talebi.<br>";
-resultText+="3️⃣ Süre içindeysen itiraz.<br>";
-resultText+="4️⃣ Borç sana ait değilse menfi tespit.<br><br>";
+if(fullText.includes("7 gün")){
+result+="⚠️ 7 günlük itiraz süresi kritik.<br>";
 }
 
-/* ==============================
-   👷 İŞÇİ ALACAKLARI
-============================== */
+if(fullText.includes("faiz")){
+result+="⚠️ Faiz oranı kontrol edilmeli (fazla hesap ihtimali).<br>";
+}
+
+result+="<div class='box'><strong>📉 En Düşük Maliyetli Çözüm Sıralaması:</strong><br>";
+result+="1️⃣ Faiz indirimi pazarlığı<br>";
+result+="2️⃣ Taksitlendirme<br>";
+result+="3️⃣ Süre içindeyse itiraz<br>";
+result+="4️⃣ Menfi tespit (yüksek maliyetli)<br></div>";
+
+result+="Risk Skoru: "+riskScore+"/100<br><br>";
+}
+
+/* ===============================
+   👷 İŞÇİ ALACAĞI STRATEJİ MOTORU
+================================ */
 
 if(fullText.includes("kıdem") ||
 fullText.includes("ihbar") ||
-fullText.includes("fazla mesai")){
+fullText.includes("fazla mesai") ||
+fullText.includes("ücret")){
 
-resultText+="<div class='info'>👷 İŞÇİ ALACAĞI TESPİT EDİLDİ</div><br>";
+result+="<div class='medium'>🟠 İŞÇİ ALACAĞI DOSYASI</div><br>";
 
-resultText+="Kontrol edilmesi gerekenler:<br>";
-resultText+="- Kıdem doğru hesaplandı mı?<br>";
-resultText+="- İhbar süresi doğru mu?<br>";
-resultText+="- Fazla mesai var mı?<br>";
-resultText+="- SGK primleri tam mı?<br><br>";
+let strategy="<div class='box'><strong>📌 Stratejik Kontrol Listesi:</strong><br>";
+
+if(fullText.includes("kıdem")){
+strategy+="• Çalışma süresi ve brüt ücret doğru hesaplandı mı?<br>";
 }
 
-/* ==============================
-   📖 ANAYASA ANALİZİ
-============================== */
+if(fullText.includes("ihbar")){
+strategy+="• Fesih şekli yazılı delil ile desteklenmeli.<br>";
+}
 
-function anayasaAcikla(madde,aciklama){
-resultText+="<div style='background:#eef;padding:10px;border-radius:8px;margin-bottom:10px'>";
-resultText+="<strong>📖 Anayasa Madde "+madde+":</strong><br>"+aciklama;
-resultText+="</div>";
+if(fullText.includes("fazla mesai")){
+strategy+="• Bordro ile banka kaydı karşılaştırılmalı.<br>";
+}
+
+if(fullText.includes("ücret")){
+strategy+="• Ücret alacağı için faiz başlangıç tarihi kontrol edilmeli.<br>";
+}
+
+if(fullText.includes("sgk")){
+strategy+="• SGK hizmet dökümü ile prim uyumu kontrol edilmeli.<br>";
+}
+
+strategy+="• Hesap cetveli dosyaya eklenmeli.<br>";
+strategy+="• Zamanaşımı süresi kontrol edilmeli.<br>";
+strategy+="</div>";
+
+result+=strategy;
+}
+
+/* ===============================
+   📖 ANAYASA BAĞLANTI ANALİZİ
+================================ */
+
+function anayasa(madde,text){
+result+="<div class='box'><strong>📖 Anayasa Madde "+madde+":</strong><br>"+text+"</div>";
 }
 
 if(fullText.includes("36")){
-anayasaAcikla("36","Hak arama hürriyeti anayasal güvencededir.");
+anayasa("36","Hak arama özgürlüğü. Savunma hakkı kısıtlanamaz.");
 }
 
 if(fullText.includes("35")){
-anayasaAcikla("35","Mülkiyet hakkı korunur. İcra işlemleri bu maddeyle bağlantılıdır.");
+anayasa("35","Mülkiyet hakkı korunur. İcra işlemleri bu kapsamda değerlendirilir.");
 }
 
 if(fullText.includes("49")){
-anayasaAcikla("49","Çalışma hakkı anayasal koruma altındadır.");
+anayasa("49","Çalışma hakkı devlet güvencesindedir.");
 }
 
 if(fullText.includes("55")){
-anayasaAcikla("55","Ücret emeğin karşılığıdır ve korunur.");
+anayasa("55","Ücret emeğin karşılığıdır ve korunur.");
 }
 
 if(fullText.includes("60")){
-anayasaAcikla("60","Sosyal güvenlik hakkı anayasal güvencededir.");
+anayasa("60","Sosyal güvenlik hakkı anayasal güvencedir.");
 }
 
-/* ==============================
-   SONUÇ YOKSA
-============================== */
+/* =============================== */
 
-if(resultText===""){
-resultText="Belirgin risk tespit edilmedi.";
+if(result===""){
+result="<div class='low'>Belirgin risk tespit edilmedi.</div>";
 }
 
-document.getElementById("result").innerHTML=resultText;
+document.getElementById("result").innerHTML=result;
 
 };
 
